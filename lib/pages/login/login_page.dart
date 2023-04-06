@@ -1,4 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:forms/pages/login/login_mixin.dart';
+import 'package:forms/pages/login/widgets/login_checkbox.dart';
+import 'package:forms/pages/login/widgets/login_text_field.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -7,77 +11,82 @@ class LoginPage extends StatefulWidget {
   State<LoginPage> createState() => _LoginPageState();
 }
 
-class _LoginPageState extends State<LoginPage> {
+class _LoginPageState extends State<LoginPage> with LoginMixin {
   String _email = '', _password = '';
   // final _formKey = GlobalKey<FormState>();
 
-  String? _emailValidator(String? text) {
-    text ??= ''; //es lo mismo que text = text ?? '';
-    final isValid = RegExp(
-      r"[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*@(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?",
-    ).hasMatch(text);
-
-    if (isValid) {
-      return null;
-    }
-
-    return 'Invalid email address';
-  }
-
-  String? _passwordValidator(String? text) {
-    text ??= '';
-    if (text.length >= 8) {
-      return null;
-    }
-
-    return 'Invalid password';
-  }
+  // bool _checked = false;
 
   @override
   Widget build(BuildContext context) {
+    // si se cumple la validacion retornara nul por lo tanto retornara true
+    bool allowSubmit = emailValidator(_email) == null;
+
+    if (allowSubmit) {
+      // si es nulo paso la validacion
+      allowSubmit = passwordValidator(_password) == null;
+    }
+
+    // if (allowSubmit) {}
+
     return Form(
       // key: _formKey,
       child: Scaffold(
         body: SafeArea(
           child: ListView(
-            padding: EdgeInsets.all(15),
+            padding: const EdgeInsets.all(15),
             children: [
-              TextFormField(
-                autovalidateMode: AutovalidateMode.onUserInteraction,
-                validator: _emailValidator,
+              LoginTextField(
+                label: 'email',
+                textInputAction: TextInputAction.next,
+                validator: emailValidator,
                 onChanged: (text) {
                   setState(() {
                     _email = text.trim();
                   });
                 },
                 keyboardType: TextInputType.emailAddress,
-                decoration: const InputDecoration(
-                  label: Text('email'),
-                ),
               ),
               const SizedBox(
                 height: 30,
               ),
-              TextFormField(
-                autovalidateMode: AutovalidateMode.onUserInteraction,
-                validator: _passwordValidator,
-                onChanged: (text) {
-                  setState(() {
-                    _password = text.trim();
-                  });
-                },
-                obscureText: true,
-                decoration: const InputDecoration(
-                  label: Text('password'),
-                ),
-              ),
-              const SizedBox(
-                height: 30,
-              ),
-              ElevatedButton(
-                onPressed: _subimit,
-                child: const Text('Sign in'),
-              ),
+              Builder(builder: (context) {
+                return LoginTextField(
+                  onSubmitted: (_) => _subimit(context),
+                  label: 'password',
+                  textInputAction: TextInputAction.send,
+                  validator: passwordValidator,
+                  onChanged: (text) {
+                    setState(() {
+                      _password = text.trim();
+                    });
+                  },
+                  obscureText: true,
+                  // keyboardType: TextInputType.visiblePassword,
+                );
+              }),
+              // const SizedBox(
+              //   height: 30,
+              // ),
+              // LoginCheckbox(
+              //   initialValue: _checked,
+              //   validator: checkboxValidator,
+              //   onChanged: (value) {
+              //     setState(() {
+              //       _checked = value;
+              //     });
+              //   },
+              //   autovalidateMode: AutovalidateMode.onUserInteraction,
+              // ),
+              const SizedBox(height: 30),
+              Builder(builder: (context) {
+                return MaterialButton(
+                  elevation: 0,
+                  color: Colors.blue.withOpacity(allowSubmit ? 1 : 0.2),
+                  onPressed: () => _subimit(context),
+                  child: const Text('Sign in'),
+                );
+              }),
             ],
           ),
         ),
@@ -105,7 +114,12 @@ class _LoginPageState extends State<LoginPage> {
 //   }
 
   // puedo usar el contexto, tuve que encerrar el boton en un builder para utulizarlo
-  void _subimit() {
+  void _subimit(BuildContext context) {
+    final formState = Form.of(context);
+
+    if (formState!.validate() ?? false) {
+      print('funciona la validacioj');
+    }
     // if(_formKey.currentState!.validate()){
 
     //   //SI ES VALIDO REALIZAR FUCNCION DE FORM
